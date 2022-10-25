@@ -11,7 +11,7 @@ def get_xkcd_answer():
 
 
 def get_picture_extension(image_url):
-    
+
     logging.info('Выделение расширения файла...')
     link_split = urlsplit(image_url)
     file_name = unquote(link_split[2])
@@ -38,3 +38,5 @@ if __name__ == '__main__':
 
     xkcd_response = get_xkcd_answer()
     download_comic(xkcd_response)
+    xkcd_comment = xkcd_response['alt']
+    print(xkcd_comment)
