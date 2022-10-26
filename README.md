@@ -29,7 +29,7 @@ python main.py
 ```
 
  Пример работы программы:
-![img_1.png](img_1.png)
+![img_1.png](https://i.imgur.com/j62Tghy.jpg)
 
 ### Цель проекта
 
