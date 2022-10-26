@@ -7,6 +7,8 @@ from urllib.parse import unquote, urlsplit
 
 
 def upload_vk_picture(access_vk_token, group_id, filename):
+
+    logging.info('Загрузка картинки на сервер VK...')
     url = 'https://api.vk.com/method/photos.getWallUploadServer'
     payload = {
         'access_token': access_vk_token,
@@ -27,6 +29,8 @@ def upload_vk_picture(access_vk_token, group_id, filename):
 
 
 def save_vk_picture(access_vk_token, group_id, upload_response):
+
+    logging.info('Сохранение картинки в альбом...')
     url = 'https://api.vk.com/method/photos.saveWallPhoto'
     photo = upload_response['photo']
     server = upload_response['server']
@@ -41,7 +45,26 @@ def save_vk_picture(access_vk_token, group_id, upload_response):
     }
     response = requests.get(url, params=payload)
     response.raise_for_status()
-    print(response.json())
+    return response.json()
+
+
+def post_vk_picture(save_vk_picture_response, xkcd_comment):
+
+    logging.info('Публикую картинку и пост в группу...')
+    url = 'https://api.vk.com/method/wall.post'
+    picture_id = save_vk_picture_response["response"][0]["id"]
+    owner_id = save_vk_picture_response["response"][0]["owner_id"]
+    payload = {
+        'access_token': access_vk_token,
+        'v': 5.131,
+        'group_id': group_id,
+        'owner_id': f'-{group_id}',
+        'attachments': f'photo{owner_id}_{picture_id}',
+        'message': xkcd_comment,
+    }
+    response = requests.get(url, params=payload)
+    response.raise_for_status()
+
 
 def get_xkcd_answer():
 
@@ -60,7 +83,7 @@ def get_picture_extension(image_url):
     return file_extension[1]
 
 
-def download_comic(image_url, filename):
+def download_xkcd_comic(image_url, filename):
 
     logging.info('Скачивание картинки...')
     response = requests.get(image_url)
@@ -74,18 +97,17 @@ if __name__ == '__main__':
     load_dotenv()
     access_vk_token = os.getenv('ACCESS_VK_TOKEN')
     group_id = os.getenv('GROUP_ID')
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     xkcd_response = get_xkcd_answer()
     image_url = xkcd_response['img']
     picture_extension = get_picture_extension(image_url)
     filename = f'comic{picture_extension}'
-    download_comic(image_url, filename)
+    download_xkcd_comic(image_url, filename)
 
     logging.info('Получение комментария к картинке xkcd...')
     xkcd_comment = xkcd_response['alt']
-    print(xkcd_comment)
     upload_response = upload_vk_picture(access_vk_token, group_id, filename)
-    save_vk_picture(access_vk_token, group_id, upload_response)
-
+    save_vk_picture_response = save_vk_picture(access_vk_token, group_id, upload_response)
+    post_vk_picture(save_vk_picture_response, xkcd_comment)
 
