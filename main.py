@@ -25,6 +25,24 @@ def upload_vk_picture(access_vk_token, group_id, filename):
         response.raise_for_status()
         return response.json()
 
+
+def save_vk_picture(access_vk_token, group_id, upload_response):
+    url = 'https://api.vk.com/method/photos.saveWallPhoto'
+    photo = upload_response['photo']
+    server = upload_response['server']
+    vk_hash = upload_response['hash']
+    payload = {
+        'access_token': access_vk_token,
+        'v': 5.131,
+        'group_id': group_id,
+        'photo': photo,
+        'server': server,
+        'hash': vk_hash,
+    }
+    response = requests.get(url, params=payload)
+    response.raise_for_status()
+    print(response.json())
+
 def get_xkcd_answer():
 
     logging.info('Получение ответа от xkcd...')
@@ -67,6 +85,7 @@ if __name__ == '__main__':
     logging.info('Получение комментария к картинке xkcd...')
     xkcd_comment = xkcd_response['alt']
     print(xkcd_comment)
-    print(upload_vk_picture(access_vk_token, group_id, filename))
+    upload_response = upload_vk_picture(access_vk_token, group_id, filename)
+    save_vk_picture(access_vk_token, group_id, upload_response)
 
 
