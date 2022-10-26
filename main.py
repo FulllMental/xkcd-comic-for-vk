@@ -116,4 +116,5 @@ if __name__ == '__main__':
     upload_response = upload_vk_picture(access_vk_token, group_id, filename)
     save_vk_picture_response = save_vk_picture(access_vk_token, group_id, upload_response)
     post_vk_picture(save_vk_picture_response, xkcd_comment)
+    os.remove(filename)
 
