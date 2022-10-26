@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from os.path import splitext
 from urllib.parse import unquote, urlsplit
+from random import randint
 
 
 def upload_vk_picture(access_vk_token, group_id, filename):
@@ -59,6 +60,7 @@ def post_vk_picture(save_vk_picture_response, xkcd_comment):
         'v': 5.131,
         'group_id': group_id,
         'owner_id': f'-{group_id}',
+        'from_group': 1,
         'attachments': f'photo{owner_id}_{picture_id}',
         'message': xkcd_comment,
     }
@@ -66,10 +68,14 @@ def post_vk_picture(save_vk_picture_response, xkcd_comment):
     response.raise_for_status()
 
 
-def get_xkcd_answer():
+def get_xkcd_random_response():
 
     logging.info('Получение ответа от xkcd...')
-    response = requests.get('https://xkcd.com/info.0.json')
+    first_response = requests.get('https://xkcd.com/info.0.json')
+    first_response.raise_for_status()
+    total_pictures = first_response.json()['num']
+    comic_number = randint(0, total_pictures)
+    response = requests.get(f'https://xkcd.com/{comic_number}/info.0.json')
     response.raise_for_status()
     return response.json()
 
@@ -99,7 +105,7 @@ if __name__ == '__main__':
     group_id = os.getenv('GROUP_ID')
     logging.basicConfig(level=logging.INFO)
 
-    xkcd_response = get_xkcd_answer()
+    xkcd_response = get_xkcd_random_response()
     image_url = xkcd_response['img']
     picture_extension = get_picture_extension(image_url)
     filename = f'comic{picture_extension}'
