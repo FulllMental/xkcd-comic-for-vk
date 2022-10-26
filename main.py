@@ -6,7 +6,7 @@ from os.path import splitext
 from urllib.parse import unquote, urlsplit
 
 
-def get_vk_response(access_vk_token, group_id):
+def upload_vk_picture(access_vk_token, group_id, filename):
     url = 'https://api.vk.com/method/photos.getWallUploadServer'
     payload = {
         'access_token': access_vk_token,
@@ -15,10 +15,19 @@ def get_vk_response(access_vk_token, group_id):
     }
     response = requests.get(url, params=payload)
     response.raise_for_status()
-    return response.json()
 
+    upload_url = response.json()['response']['upload_url']
+    with open(filename, 'rb') as file:
+        files = {
+            'photo': file
+        }
+        response = requests.post(upload_url, files=files)
+        response.raise_for_status()
+        return response.json()
 
 def get_xkcd_answer():
+
+    logging.info('Получение ответа от xkcd...')
     response = requests.get('https://xkcd.com/info.0.json')
     response.raise_for_status()
     return response.json()
@@ -33,10 +42,7 @@ def get_picture_extension(image_url):
     return file_extension[1]
 
 
-def download_comic(xkcd_response):
-    image_url = xkcd_response['img']
-    extension = get_picture_extension(image_url)
-    filename = f'comic{extension}'
+def download_comic(image_url, filename):
 
     logging.info('Скачивание картинки...')
     response = requests.get(image_url)
@@ -52,15 +58,15 @@ if __name__ == '__main__':
     group_id = os.getenv('GROUP_ID')
     logging.basicConfig(level=logging.DEBUG)
 
-    # logging.info('Получение ответа от xkcd...')
-    #
-    # xkcd_response = get_xkcd_answer()
-    # # download_comic(xkcd_response)
-    #
-    # logging.info('Получение комментария к картинке xkcd...')
-    # xkcd_comment = xkcd_response['alt']
-    # print(xkcd_comment)
+    xkcd_response = get_xkcd_answer()
+    image_url = xkcd_response['img']
+    picture_extension = get_picture_extension(image_url)
+    filename = f'comic{picture_extension}'
+    download_comic(image_url, filename)
 
-    vk_response = get_vk_response(access_vk_token, group_id)
-    print(vk_response)
+    logging.info('Получение комментария к картинке xkcd...')
+    xkcd_comment = xkcd_response['alt']
+    print(xkcd_comment)
+    print(upload_vk_picture(access_vk_token, group_id, filename))
+
 
