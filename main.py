@@ -25,8 +25,8 @@ def upload_vk_picture(access_vk_token, group_id, filename):
             'photo': file
         }
         response = requests.post(upload_url, files=files)
-        response.raise_for_status()
-        return response.json()
+    response.raise_for_status()
+    return response.json()
 
 
 def save_vk_picture(access_vk_token, group_id, upload_response):
