@@ -1,10 +1,10 @@
-import requests
 import logging
 import os
-from dotenv import load_dotenv
-from os.path import splitext
-from urllib.parse import unquote, urlsplit
 from random import randint
+from urllib.parse import unquote, urlsplit
+
+import requests
+from dotenv import load_dotenv
 
 
 def upload_vk_picture(access_vk_token, group_id, filename):
@@ -85,7 +85,7 @@ def get_picture_extension(image_url):
     logging.info('Выделение расширения файла...')
     link_split = urlsplit(image_url)
     file_name = unquote(link_split[2])
-    file_extension = splitext(file_name)
+    file_extension = os.path.splitext(file_name)
     return file_extension[1]
 
 
