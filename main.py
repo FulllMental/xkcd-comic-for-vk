@@ -29,13 +29,10 @@ def upload_vk_picture(access_vk_token, group_id, filename):
     return response.json()
 
 
-def save_vk_picture(access_vk_token, group_id, upload_response):
+def save_vk_picture(access_vk_token, group_id, photo, server, vk_hash):
 
     logging.info('Сохранение картинки в альбом...')
     url = 'https://api.vk.com/method/photos.saveWallPhoto'
-    photo = upload_response['photo']
-    server = upload_response['server']
-    vk_hash = upload_response['hash']
     payload = {
         'access_token': access_vk_token,
         'v': 5.131,
@@ -49,12 +46,10 @@ def save_vk_picture(access_vk_token, group_id, upload_response):
     return response.json()
 
 
-def post_vk_picture(save_vk_picture_response, xkcd_comment):
+def post_vk_picture(access_vk_token, group_id, picture_id, owner_id, xkcd_comment):
 
     logging.info('Публикую картинку и пост в группу...')
     url = 'https://api.vk.com/method/wall.post'
-    picture_id = save_vk_picture_response["response"][0]["id"]
-    owner_id = save_vk_picture_response["response"][0]["owner_id"]
     payload = {
         'access_token': access_vk_token,
         'v': 5.131,
@@ -114,7 +109,12 @@ if __name__ == '__main__':
     logging.info('Получение комментария к картинке xkcd...')
     xkcd_comment = xkcd_response['alt']
     upload_response = upload_vk_picture(access_vk_token, group_id, filename)
-    save_vk_picture_response = save_vk_picture(access_vk_token, group_id, upload_response)
-    post_vk_picture(save_vk_picture_response, xkcd_comment)
+    photo = upload_response['photo']
+    server = upload_response['server']
+    vk_hash = upload_response['hash']
+    save_vk_picture_response = save_vk_picture(access_vk_token, group_id, photo, server, vk_hash)
+    picture_id = save_vk_picture_response["response"][0]["id"]
+    owner_id = save_vk_picture_response["response"][0]["owner_id"]
+    post_vk_picture(access_vk_token, group_id, picture_id, owner_id, xkcd_comment)
     os.remove(filename)
 
