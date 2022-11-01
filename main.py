@@ -63,18 +63,6 @@ def post_vk_picture(access_vk_token, group_id, picture_id, owner_id, xkcd_commen
     response.raise_for_status()
 
 
-def get_xkcd_random_response():
-
-    logging.info('Получение ответа от xkcd...')
-    first_response = requests.get('https://xkcd.com/info.0.json')
-    first_response.raise_for_status()
-    total_pictures = first_response.json()['num']
-    comic_number = randint(0, total_pictures)
-    response = requests.get(f'https://xkcd.com/{comic_number}/info.0.json')
-    response.raise_for_status()
-    return response.json()
-
-
 def get_picture_extension(image_url):
 
     logging.info('Выделение расширения файла...')
@@ -84,14 +72,27 @@ def get_picture_extension(image_url):
     return file_extension[1]
 
 
-def download_xkcd_comic(image_url, filename):
+def download_random_xkcd_comic():
 
+    logging.info('Получение ответа от xkcd...')
+    first_response = requests.get('https://xkcd.com/info.0.json')
+    first_response.raise_for_status()
+    total_pictures = first_response.json()['num']
+    comic_number = randint(0, total_pictures)
+    xkcd_random_comic_response = requests.get(f'https://xkcd.com/{comic_number}/info.0.json')
+    xkcd_random_comic_response.raise_for_status()
+    random_comic = xkcd_random_comic_response.json()
+    image_url = random_comic['img']
+    xkcd_comment = random_comic['alt']
+    picture_extension = get_picture_extension(image_url)
+    filename = f'comic{picture_extension}'
+    
     logging.info('Скачивание картинки...')
     response = requests.get(image_url)
     response.raise_for_status()
-
     with open(filename, 'wb') as file:
         file.write(response.content)
+    return filename, xkcd_comment
 
 
 if __name__ == '__main__':
@@ -99,22 +100,17 @@ if __name__ == '__main__':
     access_vk_token = os.getenv('ACCESS_VK_TOKEN')
     group_id = os.getenv('GROUP_ID')
     logging.basicConfig(level=logging.INFO)
+    try:
+        filename, xkcd_comment = download_random_xkcd_comic()
 
-    xkcd_response = get_xkcd_random_response()
-    image_url = xkcd_response['img']
-    picture_extension = get_picture_extension(image_url)
-    filename = f'comic{picture_extension}'
-    download_xkcd_comic(image_url, filename)
-
-    logging.info('Получение комментария к картинке xkcd...')
-    xkcd_comment = xkcd_response['alt']
-    upload_response = upload_vk_picture(access_vk_token, group_id, filename)
-    photo = upload_response['photo']
-    server = upload_response['server']
-    vk_hash = upload_response['hash']
-    save_vk_picture_response = save_vk_picture(access_vk_token, group_id, photo, server, vk_hash)
-    picture_id = save_vk_picture_response["response"][0]["id"]
-    owner_id = save_vk_picture_response["response"][0]["owner_id"]
-    post_vk_picture(access_vk_token, group_id, picture_id, owner_id, xkcd_comment)
-    os.remove(filename)
-
+        logging.info('Получение комментария к картинке xkcd...')
+        upload_response = upload_vk_picture(access_vk_token, group_id, filename)
+        photo = upload_response['photo']
+        server = upload_response['server']
+        vk_hash = upload_response['hash']
+        save_vk_picture_response = save_vk_picture(access_vk_token, group_id, photo, server, vk_hash)
+        picture_id = save_vk_picture_response["response"][0]["id"]
+        owner_id = save_vk_picture_response["response"][0]["owner_id"]
+        post_vk_picture(access_vk_token, group_id, picture_id, owner_id, xkcd_comment)
+    finally:
+        os.remove(filename)
