@@ -18,15 +18,19 @@ def upload_vk_picture(vk_access_token, vk_group_id, filename):
     }
     response = requests.get(url, params=payload)
     response.raise_for_status()
+    vk_api_response = response.json()
+    check_vk_api_response(vk_api_response)
 
-    upload_url = response.json()['response']['upload_url']
+    upload_url = vk_api_response['response']['upload_url']
     with open(filename, 'rb') as file:
         files = {
             'photo': file
         }
         response = requests.post(upload_url, files=files)
     response.raise_for_status()
-    return response.json()
+    vk_api_response = response.json()
+    check_vk_api_response(vk_api_response)
+    return vk_api_response
 
 
 def save_vk_picture(vk_access_token, vk_group_id, photo, server, vk_hash):
@@ -43,7 +47,9 @@ def save_vk_picture(vk_access_token, vk_group_id, photo, server, vk_hash):
     }
     response = requests.get(url, params=payload)
     response.raise_for_status()
-    return response.json()
+    vk_api_response = response.json()
+    check_vk_api_response(vk_api_response)
+    return vk_api_response
 
 
 def post_vk_picture(vk_access_token, vk_group_id, picture_id, owner_id, xkcd_comment):
@@ -61,6 +67,8 @@ def post_vk_picture(vk_access_token, vk_group_id, picture_id, owner_id, xkcd_com
     }
     response = requests.get(url, params=payload)
     response.raise_for_status()
+    vk_api_response = response.json()
+    check_vk_api_response(vk_api_response)
 
 
 def get_picture_extension(image_url):
@@ -93,6 +101,14 @@ def download_random_xkcd_comic():
     with open(filename, 'wb') as file:
         file.write(response.content)
     return filename, xkcd_comment
+
+
+def check_vk_api_response(vk_api_response):
+    try:
+        error_check = vk_api_response['error']
+        raise Exception(f'Error code: "{error_check["error_code"]}". With message: "{error_check["error_msg"]}"')
+    except KeyError:
+        return
 
 
 if __name__ == '__main__':
